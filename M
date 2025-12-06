@@ -1,0 +1,83 @@
+DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>สคริปต์ตัวเริ่มต้น</title>
+</head>
+<body>
+    <h1>สวัสดี! นี่คือเว็บตัวเริ่มต้นของคุณ</h1>
+    <script>
+        console.log("สคริปต์ตัวเริ่มต้นทำงานในเบราว์เซอร์");
+    </script>
+</body>
+</html>-- LocalScript หรือ ServerScript
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- ป้องกันไม่ให้ HP เป็น 0
+humanoid.HealthChanged:Connect(function()
+    if humanoid.Health <= 0 then
+        humanoid.Health = humanoid.MaxHealth
+    end
+end)
+-- ตัวอย่างสคริปต์ล็อคหัว
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local head = character:WaitForChild("Head")
+
+-- เป้าหมาย (Target) ที่หัวจะหันไป
+local target = workspace:WaitForChild("TargetPart") -- เปลี่ยนเป็นชิ้นส่วนหรือโมเดลที่ต้องการล็อค
+
+-- ฟังก์ชันล็อคหัว
+RunService.RenderStepped:Connect(function()
+    if head and target then
+        local direction = (target.Position - head.Position).Unit
+        head.CFrame = CFrame.new(head.Position, head.Position + direction)
+    end
+end)
+Citizen.CreateThread(function()
+    while true do
+        Citizen.Wait(0)
+        local playerPed = PlayerPedId()
+        local headBone = GetPedBoneIndex(playerPed, 31086) -- bone index ของหัว
+        SetEntityRotation(GetEntityRotation(playerPed), 2, true)
+    end
+end)
+local character = game.Players.LocalPlayer.Character
+local head = character:WaitForChild("Head")
+
+-- ปิดการหมุนของหัว
+game:GetService("RunService").RenderStepped:Connect(function()
+    -- ตั้งค่า CFrame ของหัวให้คงที่
+    head.CFrame = CFrame.new(head.Position) * CFrame.Angles(0, 0, 0)
+end)
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
+
+-- สมมติเรามีเป้าหมายเป็นคนอื่น
+local targetPlayer = game.Players:FindFirstChild("TargetPlayer")
+local targetCharacter = targetPlayer.Character or targetPlayer.CharacterAdded:Wait()
+local targetHumanoidRootPart = targetCharacter:WaitForChild("HumanoidRootPart")
+
+-- คำนวณทิศทาง
+local direction = (targetHumanoidRootPart.Position - humanoidRootPart.Position).Unit
+-- ปรับให้ตัวละครหันไปทางนั้น
+humanoidRootPart.CFrame = CFrame.new(humanoidRootPart.Position, targetHumanoidRootPart.Position)
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- สร้าง ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Parent = playerGui
+
+-- สร้าง ImageLabel
+local imageLabel = Instance.new("ImageLabel")
+imageLabel.Size = UDim2.new(0, 100, 0, 100) -- ขนาด 100x100 px
+imageLabel.Position = UDim2.new(0.5, -50, 0.5, -50) -- ตรงกลางหน้าจอ
+imageLabel.Image = "rbxassetid://123456789" -- ใส่ Asset ID ของรูปไอเท็ม
+imageLabel.Parent = screenGui
