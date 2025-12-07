@@ -1,0 +1,29 @@
+local Players = game.Players
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local root = char:WaitForChild("HumanoidRootPart")
+
+local detectionRange = 20
+
+while true do
+    task.wait(0.2)
+
+    for _, otherPlayer in pairs(Players:GetPlayers()) do
+        if otherPlayer ~= player then
+            local otherChar = otherPlayer.Character
+            if otherChar and otherChar:FindFirstChild("HumanoidRootPart") then
+                local distance = (root.Position - otherChar.HumanoidRootPart.Position).Magnitude
+                
+                if distance <= detectionRange then
+                    print("พบผู้เล่น:", otherPlayer.Name, "ระยะ:", distance)
+                end
+            end
+        end
+    end
+end
+-- Script ใน StarterCharacterScripts
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+
+humanoid.WalkSpeed = 30 -- ค่าเริ่มต้นปกติคือ 16
