@@ -1,0 +1,246 @@
+-- โหลด UI
+local WindUI = loadstring(game:HttpGet("https://github.com/Footagesus/WindUI/releases/latest/download/main.lua"))()
+
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- ================= ตัวแปร =================
+local speedEnabled = false
+local speedValue = 100
+
+local jumpEnabled = false
+local jumpValue = 100
+
+local noclipEnabled = false
+
+local advEspEnabled = false
+local espObjects = {}
+
+-- ================= สร้างหน้าต่าง =================
+local Window = WindUI:CreateWindow({
+    Title = "King HUB",
+    Icon = "rbxassetid://137877095538630",
+    Author = "King",
+})
+
+-- ================= ปุ่มเปิด UI =================
+Window:EditOpenButton({
+    Title = "King HUB",
+    Icon = "rbxassetid://137877095538630",
+    CornerRadius = UDim.new(0,50),
+    StrokeThickness = 3,
+    Color = ColorSequence.new({  
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255,105,180)),  
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(170,0,255))  
+    })
+})
+
+-- ================= TAB 1 =================
+local Tab1 = Window:Tab({
+    Title = "แบบผสม",
+    Icon = "zap",
+})
+
+Tab1:Select()
+
+-- ================= SPEED =================
+Tab1:Input({
+    Title = "ใส่ความเร็ว",
+    Value = "100",
+    Callback = function(value)
+        speedValue = tonumber(value) or 100
+    end
+})
+
+Tab1:Toggle({
+    Title = "เปิด/ปิด ความเร็ว",
+    Callback = function(state)
+        speedEnabled = state
+    end
+})
+
+-- ================= JUMP =================
+Tab1:Input({
+    Title = "ใส่ความสูงกระโดด",
+    Value = "100",
+    Callback = function(value)
+        jumpValue = tonumber(value) or 100
+    end
+})
+
+Tab1:Toggle({
+    Title = "เปิด/ปิด กระโดดสูง",
+    Callback = function(state)
+        jumpEnabled = state
+    end
+})
+
+-- ================= NOCLIP =================
+Tab1:Toggle({
+    Title = "เปิด/ปิด เดินทะลุ",
+    Callback = function(state)
+        noclipEnabled = state
+    end
+})
+
+-- ================= TAB 2 =================
+local Tab2 = Window:Tab({
+    Title = "มองทะลุ",
+    Icon = "eye",
+})
+
+-- ================= ESP FUNCTION =================
+local function createESP(target)
+    if target == player then return end  
+    if espObjects[target] then return end -- ป้องกันการสร้างซ้ำ
+
+    local box = Drawing.new("Square")  
+    box.Color = Color3.fromRGB(255,255,255)  
+    box.Thickness = 2  
+    box.Filled = false  
+    box.Visible = false  
+
+    local line = Drawing.new("Line")  
+    line.Color = Color3.fromRGB(255,105,180)  
+    line.Thickness = 1  
+    line.Visible = false  
+
+    local text = Drawing.new("Text")  
+    text.Color = Color3.fromRGB(255,105,180)  
+    text.Size = 16  
+    text.Center = true  
+    text.Outline = true  
+    text.Visible = false  
+
+    espObjects[target] = {  
+        box = box,  
+        line = line,  
+        text = text  
+    }
+end
+
+local function removeESP(target)
+    if espObjects[target] then
+        espObjects[target].box:Remove()
+        espObjects[target].line:Remove()
+        espObjects[target].text:Remove()
+        espObjects[target] = nil
+    end
+end
+
+-- เคลียร์ ESP เก่าทั้งหมดเมื่อปิดสวิตช์
+local function hideAllESP()
+    for _, obj in pairs(espObjects) do  
+        obj.box.Visible = false  
+        obj.line.Visible = false  
+        obj.text.Visible = false  
+    end  
+end
+
+for _, p in pairs(game.Players:GetPlayers()) do
+    createESP(p)
+end
+
+game.Players.PlayerAdded:Connect(createESP)
+game.Players.PlayerRemoving:Connect(removeESP)
+
+Tab2:Toggle({
+    Title = "ESP",
+    Callback = function(state)
+        advEspEnabled = state  
+        if not state then  
+            hideAllESP()
+        end  
+    end
+})
+
+-- ================= MAIN LOOP =================
+RunService.Stepped:Connect(function() -- เปลี่ยนเป็น Stepped เพื่อให้ระบบ Noclip ทำงานได้เสถียร ไม่หล่นแมพ
+    local char = player.Character  
+    if char then  
+        local humanoid = char:FindFirstChildOfClass("Humanoid")  
+
+        -- SPEED & JUMP
+        if humanoid then  
+            humanoid.WalkSpeed = speedEnabled and speedValue or 16  
+            -- ตรวจสอบ UseJumpPower เพื่อให้รองรับเกมเก่าและใหม่
+            if not humanoid.UseJumpPower then
+                humanoid.UseJumpPower = true
+            end
+            humanoid.JumpPower = jumpEnabled and jumpValue or 50  
+        end  
+
+        -- NOCLIP  
+        if noclipEnabled then  
+            for _, v in ipairs(char:GetDescendants()) do  
+                if v:IsA("BasePart") and v.CanCollide == true then  
+                    v.CanCollide = false  
+                end  
+            end  
+        end  
+    end  
+end)
+
+-- ================= ESP LOOP =================  
+RunService.RenderStepped:Connect(function()
+    if not advEspEnabled then 
+        hideAllESP()
+        return 
+    end  
+
+    local camera = workspace.CurrentCamera  
+
+    for p, obj in pairs(espObjects) do  
+        local targetChar = p.Character  
+
+        if targetChar and targetChar:FindFirstChildOfClass("Humanoid") and targetChar:FindFirstChildOfClass("Humanoid").Health > 0 then  
+            local head = targetChar:FindFirstChild("Head")  
+            local hrp = targetChar:FindFirstChild("HumanoidRootPart")  
+
+            if head and hrp then  
+                local headPos, visible1 = camera:WorldToViewportPoint(head.Position + Vector3.new(0, 0.5, 0))  
+                local footPos, visible2 = camera:WorldToViewportPoint(hrp.Position - Vector3.new(0, 3, 0))  
+
+                if visible1 and visible2 then  
+                    local height = math.abs(headPos.Y - footPos.Y)  
+                    local width = height / 2  
+
+                    obj.box.Size = Vector2.new(width, height)  
+                    obj.box.Position = Vector2.new(headPos.X - width / 2, headPos.Y)  
+                    obj.box.Visible = true  
+
+                    obj.line.From = Vector2.new(camera.ViewportSize.X / 2, camera.ViewportSize.Y)  
+                    obj.line.To = Vector2.new(headPos.X, headPos.Y)  
+                    obj.line.Visible = true  
+
+                    obj.text.Text = p.Name .. " [" .. math.round(humanoid and targetChar:FindFirstChildOfClass("Humanoid").Health or 0) .. "]"
+                    obj.text.Position = Vector2.new(headPos.X, headPos.Y - 20)  
+                    obj.text.Visible = true  
+                else  
+                    obj.box.Visible = false  
+                    obj.line.Visible = false  
+                    obj.text.Visible = false  
+                end  
+            else
+                obj.box.Visible = false  
+                obj.line.Visible = false  
+                obj.text.Visible = false  
+            end  
+        else  
+            obj.box.Visible = false  
+            obj.line.Visible = false  
+            obj.text.Visible = false  
+        end  
+    end  
+end)
+
+-- ================= กันรีเซ็ต =================
+player.CharacterAdded:Connect(function(char)
+    local humanoid = char:WaitForChild("Humanoid")  
+    task.wait(0.5) -- หน่วงเวลาเล็กน้อยเพื่อให้ระบบตัวละครโหลดเสร็จสมบูรณ์
+    if speedEnabled then humanoid.WalkSpeed = speedValue end
+    if jumpEnabled then 
+        humanoid.UseJumpPower = true
+        humanoid.JumpPower = jumpValue 
+    end
+end)
